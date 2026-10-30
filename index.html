@@ -40,7 +40,7 @@ const $=id=>document.getElementById(id),now=()=>Date.now();
 const jobs=[{id:'loader',name:'Грузчик',pay:100,level:0},{id:'hairdresser',name:'Парикмахер',pay:250,level:10},{id:'businessman',name:'Бизнесмен',pay:500,level:25}];
 let s;try{s=JSON.parse(localStorage.getItem('taksabot-save-v2'))}catch(e){}
 const hasPreviousSave=!!s;
-s=s||{balance:100,name:'Такса',hunger:100,joy:100,level:0,xp:0,lastTick:now(),lastBonus:0,shift:null,restUntil:0,inventory:{food:0,bone:0,gift:0}};s.inventory=s.inventory||{food:0,bone:0,gift:0};
+s=s||{balance:100,name:'Такса',hunger:100,joy:100,level:0,xp:0,lastTick:now(),lastBonus:0,shift:null,restUntil:0,inventory:{food:0,bone:0,gift:0}};s.inventory=s.inventory||{food:0,bone:0,gift:0};s.balance=Math.max(0,Number(s.balance)||0);if(hasPreviousSave&&!s.initialGrant100){s.balance+=100;s.initialGrant100=true}else if(!hasPreviousSave){s.initialGrant100=true}
 
 const tutorialPages=[
  ['Добро пожаловать в Taksabot!','Это твоя такса. Заботься о ней, играй и помогай ей расти.'],
@@ -51,7 +51,7 @@ const tutorialPages=[
 let tutorialIndex=0;
 function showSection(name){['home','work','shop','settings'].forEach(x=>{const el=$('section-'+x);if(el)el.classList.toggle('hidden',x!==name)});}
 function openHelp(){$('helpPanel').classList.toggle('hidden');}
-function buyItem(type){const items={food:{price:100,label:'корм'},bone:{price:200,label:'косточку'},gift:{price:300,label:'подарок'}};const item=items[type];if(!item)return;if(s.balance<item.price){$('shopStatus').textContent='Не хватает 🌭!';return}s.balance-=item.price;s.inventory[type]=(s.inventory[type]||0)+1;persist();$('shopStatus').textContent='Куплено: '+item.label+'. В запасе: '+s.inventory[type];}
+function buyItem(type){const items={food:{price:100,label:'корм'},bone:{price:200,label:'косточку'},gift:{price:300,label:'подарок'}};const item=items[type];if(!item)return;if(s.balance<item.price){$('shopStatus').textContent='Не хватает 🌭!';return}s.balance=Math.max(0,s.balance-item.price);s.inventory[type]=(s.inventory[type]||0)+1;persist();$('shopStatus').textContent='Куплено: '+item.label+'. В запасе: '+s.inventory[type];}
 function closeTutorial(){ $('tutorial').classList.remove('open'); }
 function openTutorial(){ tutorialIndex=0; renderTutorial(); $('tutorial').classList.add('open'); }
 function showTutorial(){
@@ -71,7 +71,7 @@ $('tutorialNext').addEventListener('click',()=>{if(tutorialIndex<tutorialPages.l
 $('tutorialSkip').addEventListener('click',closeTutorial);
 
 function msg(t){const el=$('log');if(el)el.textContent=t}
-function persist(){localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render()}
+function persist(){s.balance=Math.max(0,Number(s.balance)||0);localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render()}
 function render(){
 $('balance').textContent='🌭 '+s.balance;$('dogname').textContent='Имя: '+s.name;$('level').textContent='УРОВЕНЬ '+s.level;$('xp').textContent=s.xp;
 $('hungerText').textContent=s.hunger+'/100';$('joyText').textContent=s.joy+'/100';$('hungerBar').style.width=s.hunger+'%';$('joyBar').style.width=s.joy+'%';
@@ -81,11 +81,11 @@ if(s.shift){let remain=Math.max(0,3600000-(now()-s.shift.started));$('workStatus
 function care(){let d=Math.floor((now()-s.lastTick)/600000);if(d>0){s.hunger=Math.max(0,s.hunger-d);s.joy=Math.max(0,s.joy-d);s.lastTick+=d*600000}}
 function animateYard(kind){const y=document.querySelector('.yard');y.classList.remove('happy','feed');void y.offsetWidth;y.classList.add(kind);setTimeout(()=>y.classList.remove(kind),1900)}
 function play(){const old=s.joy;s.joy=Math.min(100,s.joy+10);s.xp+=2;levelUp();persist();if(s.joy>old)animateYard('happy');msg('🎾 Такса радостно прыгает и виляет хвостом! +'+(s.joy-old)+' к радости')}
-function feed(){if(s.hunger>=90){msg('Такса пока не голодна.');return}if((s.inventory.food||0)>0){s.inventory.food--;}else{if(s.balance<100){msg('Не хватает 100 🌭 на корм.');return}s.balance-=100;}s.hunger=Math.min(100,s.hunger+35);s.joy=Math.min(100,s.joy+3);s.xp++;levelUp();persist();animateYard('feed');msg('🥣 Такса с аппетитом ест и радостно подпрыгивает!')}
+function feed(){if(s.hunger>=90){msg('Такса пока не голодна.');return}if((s.inventory.food||0)>0){s.inventory.food--;}else{if(s.balance<100){msg('Не хватает 100 🌭 на корм.');return}s.balance=Math.max(0,s.balance-100);}s.hunger=Math.min(100,s.hunger+35);s.joy=Math.min(100,s.joy+3);s.xp++;levelUp();persist();animateYard('feed');msg('🥣 Такса с аппетитом ест и радостно подпрыгивает!')}
 function walk(){const old=s.joy;s.joy=Math.min(100,s.joy+15);s.hunger=Math.max(0,s.hunger-5);s.xp+=3;levelUp();persist();if(s.joy>old)animateYard('happy');msg('🌳 Вы погуляли вместе! Такса счастливо виляет хвостом!')}
 function pet(){s.joy=Math.min(100,s.joy+5);persist();msg('Таксе приятно!')}
 function levelUp(){while(s.xp>=(s.level+1)*20)s.level++}
-function renameDog(){let n=prompt('Новое имя таксы:',s.name);if(n&&n.trim()){s.balance-=500;s.name=n.trim().slice(0,20);persist();msg('Теперь таксу зовут '+s.name+'.')}}
+function renameDog(){let n=prompt('Новое имя таксы:',s.name);if(n&&n.trim()){if(s.balance<500){msg('Не хватает 500 🌭, чтобы изменить имя.');return}s.balance=Math.max(0,s.balance-500);s.name=n.trim().slice(0,20);persist();msg('Теперь таксу зовут '+s.name+'.')}}
 function bonus(){let day=Math.floor(now()/86400000);if(s.lastBonus===day){if($('bonusStatus'))$('bonusStatus').textContent='Сегодня бонус уже получен.';return}s.lastBonus=day;s.balance+=100;persist();if($('bonusStatus'))$('bonusStatus').textContent='Бонус получен: +100 🌭!'}
 function startWork(id){if(s.shift){msg('Сначала заверши текущую смену.');return}if(now()<s.restUntil){msg('Нужно отдохнуть после прошлой смены.');return}let j=jobs.find(x=>x.id===id);if(!j||s.level<j.level)return;if(s.hunger<15||s.joy<15){msg('Перед работой покорми таксу и подними настроение.');return}s.shift={id,started:now()};persist();msg('Смена началась. Вернись не раньше чем через час.')}
 function claimWork(){if(!s.shift)return;let elapsed=now()-s.shift.started;if(elapsed<3600000){msg('Смена длится минимум 1 час. Рано забирать оплату!');return}let j=jobs.find(x=>x.id===s.shift.id);let hours=Math.floor(elapsed/3600000);let pay=hours*j.pay;s.balance+=pay;s.xp+=Math.max(1,hours*5);levelUp();s.hunger=Math.max(0,s.hunger-10);s.joy=Math.max(0,s.joy-5);s.shift=null;s.restUntil=now()+15*60000;persist();msg('Смена завершена! Получено '+pay+' 🌭. Отдых — 15 минут.')}
