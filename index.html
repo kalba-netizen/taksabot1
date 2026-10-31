@@ -91,7 +91,7 @@ function bonus(){let day=Math.floor(now()/86400000);if(s.lastBonus===day){if($('
 function startWork(id){if(s.shift){msg('Сначала заверши текущую смену.');return}if(now()<s.restUntil){msg('Нужно отдохнуть после прошлой смены.');return}let j=jobs.find(x=>x.id===id);if(!j||s.level<j.level)return;if(s.hunger<15||s.joy<15){msg('Перед работой покорми таксу и подними настроение.');return}s.shift={id,started:now()};persist();msg('Смена началась. Вернись не раньше чем через час.')}
 function claimWork(){if(!s.shift)return;let elapsed=now()-s.shift.started;if(elapsed<3600000){msg('Смена длится минимум 1 час. Рано забирать оплату!');return}let j=jobs.find(x=>x.id===s.shift.id);let hours=Math.floor(elapsed/3600000);let pay=hours*j.pay;s.balance+=pay;s.xp+=Math.max(1,hours*5);levelUp();s.hunger=Math.max(0,s.hunger-10);s.joy=Math.max(0,s.joy-5);s.shift=null;s.restUntil=now()+15*60000;persist();msg('Смена завершена! Получено '+pay+' 🌭. Отдых — 15 минут.')}
 function tick(){care();if(s.shift&&now()-s.shift.started>=3600000){/* remains claimable; timestamps survive app restarts */}persist()}
-$('saveDogNameBtn').addEventListener('click',saveDogName);$('dogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDogName()});
+$('dogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDogName()});
 $('saveDogNameBtn').addEventListener('click',saveDogName);$('dogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDogName()});
 render();tick();showTutorial();setInterval(tick,30000);
 try{const app=window.StaticGram&&window.StaticGram.WebApp;if(app){app.ready&&app.ready();app.expand&&app.expand()}}catch(e){}
