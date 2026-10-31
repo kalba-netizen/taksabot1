@@ -43,7 +43,7 @@ export default {
     if(!body||typeof body.save!=="object"||Array.isArray(body.save))return json({error:"Invalid save"},400);
     const save=JSON.stringify(body.save);
     if(save.length>30000)return json({error:"Save too large"},413);
-    await env.DB.prepare("UPDATE players SET save_json=?,last_seen=? WHERE id=?").bind(save,seen,id).run();
+    await env.DB.prepare("UPDATE players SET save_json=?,balance=?,xp=?,level=?,last_seen=? WHERE id=?").bind(save,safeInt(body.save.balance)||0,safeInt(body.save.xp)||0,safeInt(body.save.level)||0,seen,id).run();
     return json({ok:true});
    }
    if(path.startsWith("/api/admin/")) {
@@ -69,9 +69,9 @@ export default {
      if(!/^\d{1,24}$/.test(id))return json({error:"Invalid player id"},400);
      const p=await env.DB.prepare("SELECT id,save_json FROM players WHERE id=?").bind(id).first();
      if(!p)return json({error:"Player not found"},404);
-     for(const k of ["balance","xp","level"]){if(b[k]!==undefined){const v=safeInt(b[k]);if(v===null)return json({error:"Invalid "+k},400);await env.DB.prepare("UPDATE players SET "+k+"=? WHERE id=?").bind(v,id).run();}}
+     let current={};try{current=JSON.parse(p.save_json||"{}")}catch{} for(const k of ["balance","xp","level"]){if(b[k]!==undefined){const v=safeInt(b[k]);if(v===null)return json({error:"Invalid "+k},400);current[k]=v;await env.DB.prepare("UPDATE players SET "+k+"=? WHERE id=?").bind(v,id).run();}} if(Object.keys(current).length)await env.DB.prepare("UPDATE players SET save_json=? WHERE id=?").bind(JSON.stringify(current),id).run();
      if(typeof b.blocked==="boolean")await env.DB.prepare("UPDATE players SET blocked=? WHERE id=?").bind(b.blocked?1:0,id).run();
-     if(b.reset===true)await env.DB.prepare("UPDATE players SET save_json=NULL,balance=100,xp=0,level=0 WHERE id=?").bind(id).run();
+     if(b.reset===true){const fresh={balance:100,name:"Такса",hunger:100,joy:100,level:0,xp:0,lastTick:Date.now(),lastBonus:0,shift:null,restUntil:0,inventory:{food:0,bone:0,gift:0},initialGrant100:true};await env.DB.prepare("UPDATE players SET save_json=?,balance=100,xp=0,level=0 WHERE id=?").bind(JSON.stringify(fresh),id).run();}
      return json({ok:true});
     }
     if(path==="/api/admin/professions"&&req.method==="GET"){
