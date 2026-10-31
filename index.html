@@ -39,6 +39,12 @@
 </main>
 <script>
 const $=id=>document.getElementById(id),now=()=>Date.now();
+const API_BASE=''; // Вставь сюда URL Cloudflare Worker после публикации
+let cloudReady=false,cloudBusy=false;
+function staticGramInitData(){const a=window.StaticGram&&window.StaticGram.WebApp;return (a&&a.initData)||(window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.initData)||''}
+async function cloudRequest(method,body){const raw=staticGramInitData();if(!API_BASE||!raw)return null;const r=await fetch(API_BASE+'/api/save',{method,headers:{'Content-Type':'application/json','X-StaticGram-Init-Data':raw},body:body?JSON.stringify(body):undefined});if(!r.ok)throw new Error('Cloud save HTTP '+r.status);return r.json()}
+async function bootCloud(){if(!API_BASE||!staticGramInitData())return;try{const remote=await cloudRequest('GET');if(remote&&remote.save){s=remote.save;s.inventory=s.inventory||{food:0,bone:0,gift:0};localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render()}else{await cloudRequest('POST',{save:s})}cloudReady=true}catch(e){console.warn('Cloud save unavailable',e)}}
+async function pushCloud(){if(!cloudReady||cloudBusy)return;cloudBusy=true;try{await cloudRequest('POST',{save:s})}catch(e){console.warn('Cloud save failed',e)}finally{cloudBusy=false}}
 const jobs=[{id:'loader',name:'Грузчик',pay:100,level:0},{id:'hairdresser',name:'Парикмахер',pay:250,level:10},{id:'businessman',name:'Бизнесмен',pay:500,level:25}];
 let s;try{s=JSON.parse(localStorage.getItem('taksabot-save-v2'))}catch(e){}
 const hasPreviousSave=!!s;
@@ -73,7 +79,7 @@ $('tutorialNext').addEventListener('click',()=>{if(tutorialIndex<tutorialPages.l
 $('tutorialSkip').addEventListener('click',closeTutorial);
 
 function msg(t){}
-function persist(){s.balance=Math.max(0,Number(s.balance)||0);localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render()}
+function persist(){s.balance=Math.max(0,Number(s.balance)||0);localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render();pushCloud()}
 function render(){
 $('balance').textContent='🌭 '+s.balance;$('dogname').textContent='Имя: '+s.name;$('level').textContent='УРОВЕНЬ '+s.level;const xpStart=s.level===0?0:500+(s.level-1)*150,xpTarget=500+s.level*150,xpProgress=Math.max(0,Math.min(xpTarget-xpStart,s.xp-xpStart));$('xp').textContent=xpProgress+' / '+(xpTarget-xpStart)+' XP';$('xpNext').textContent='До уровня '+(s.level+1);$('xpBar').style.width=(xpProgress/(xpTarget-xpStart)*100)+'%';
 $('hungerText').textContent=s.hunger+'/100';$('joyText').textContent=s.joy+'/100';$('hungerBar').style.width=s.hunger+'%';$('joyBar').style.width=s.joy+'%';
@@ -94,6 +100,6 @@ function finishWork(){if(!s.shift)return;const elapsed=now()-s.shift.started,blo
 function tick(){care();persist()}
 $('dogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDogName()});
 $('saveDogNameBtn').addEventListener('click',saveDogName);$('dogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDogName()});
-render();tick();showTutorial();setInterval(tick,30000);
+render();tick();showTutorial();setInterval(tick,30000);bootCloud();
 try{const app=window.StaticGram&&window.StaticGram.WebApp;if(app){app.ready&&app.ready();app.expand&&app.expand()}}catch(e){}
 </script></body></html>
