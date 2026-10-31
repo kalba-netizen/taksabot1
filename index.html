@@ -78,7 +78,8 @@ function renderTutorial(){
 $('tutorialNext').addEventListener('click',()=>{if(tutorialIndex<tutorialPages.length-1){tutorialIndex++;renderTutorial()}else closeTutorial()});
 $('tutorialSkip').addEventListener('click',closeTutorial);
 
-function resetLevelProgressIfNeeded(){if(s.levelProgressResetV1)return;s.level=0;s.xp=0;s.levelProgressResetV1=true;localStorage.setItem('taksabot-save-v2',JSON.stringify(s));}\nfunction msg(t){}
+function resetLevelProgressIfNeeded(){if(s.levelProgressResetV1)return;s.level=0;s.xp=0;s.levelProgressResetV1=true;localStorage.setItem('taksabot-save-v2',JSON.stringify(s));}
+function msg(t){}
 function persist(){s.balance=Math.max(0,Number(s.balance)||0);localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render();pushCloud()}
 function render(){
 $('balance').textContent='🌭 '+s.balance;$('dogname').textContent='Имя: '+s.name;$('level').textContent='УРОВЕНЬ '+s.level;const xpStart=0,xpTarget=150*(s.level+1),xpProgress=Math.max(0,Math.min(xpTarget,s.xp));$('xp').textContent=xpProgress+' / '+(xpTarget-xpStart)+' XP';$('xpNext').textContent='До уровня '+(s.level+1);$('xpBar').style.width=(xpProgress/(xpTarget-xpStart)*100)+'%';
