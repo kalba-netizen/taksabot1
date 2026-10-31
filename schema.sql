@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS players (
  xp INTEGER NOT NULL DEFAULT 0 CHECK(xp >= 0),
  level INTEGER NOT NULL DEFAULT 0 CHECK(level >= 0),
  blocked INTEGER NOT NULL DEFAULT 0,
- last_seen INTEGER NOT NULL DEFAULT 0
+ last_seen INTEGER NOT NULL DEFAULT 0,
+ save_json TEXT
 );
 CREATE INDEX IF NOT EXISTS players_last_seen ON players(last_seen);
 CREATE TABLE IF NOT EXISTS professions (
