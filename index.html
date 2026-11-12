@@ -61,7 +61,7 @@ async function pushCloud(){if(!cloudReady||cloudBusy)return;cloudBusy=true;try{a
 const jobs=[{id:'loader',name:'Грузчик',pay:150,level:0},{id:'hairdresser',name:'Парикмахер',pay:300,level:10},{id:'businessman',name:'Бизнесмен',pay:550,level:25}];
 let s;try{s=JSON.parse(localStorage.getItem('taksabot-save-v2'))}catch(e){}
 const hasPreviousSave=!!s;
-s=s||{balance:100,name:'Такса',hunger:100,joy:100,level:0,xp:0,lastTick:now(),lastBonus:0,shift:null,restUntil:0,inventory:{food:0,bone:0,gift:0}};s.inventory=s.inventory||{food:0,bone:0,gift:0};resetLevelProgressIfNeeded();s.balance=Math.max(0,Number(s.balance)||0);if(hasPreviousSave&&!s.initialGrant100){s.balance+=100;s.initialGrant100=true}else if(!hasPreviousSave){s.initialGrant100=true}
+s=s||{balance:100,name:'Такса',hunger:100,joy:100,level:0,xp:0,lastTick:now(),lastBonus:0,shift:null,restUntil:0,inventory:{food:0,bone:0,gift:0}};s.inventory=s.inventory||{food:0,bone:0,gift:0};s.balance=Math.max(0,Number(s.balance)||0);if(hasPreviousSave&&!s.initialGrant100){s.balance+=100;s.initialGrant100=true}else if(!hasPreviousSave){s.initialGrant100=true}
 
 const tutorialPages=[
  ['Уход за таксой','Следи за сытостью и радостью. Нажми на таксу, чтобы погладить её, или «ПОГУЛЯТЬ», чтобы выйти на прогулку.'],
@@ -101,7 +101,6 @@ function renderTutorial(){
 $('tutorialNext').addEventListener('click',()=>{if(tutorialIndex<tutorialPages.length-1){tutorialIndex++;renderTutorial()}else closeTutorial()});
 $('tutorialSkip').addEventListener('click',closeTutorial);
 
-function resetLevelProgressIfNeeded(){if(s.levelProgressResetV1)return;s.level=0;s.xp=0;s.levelProgressResetV1=true;localStorage.setItem('taksabot-save-v2',JSON.stringify(s));}
 let toastTimer=null,toastCloseTimer=null;function showToast(t,color){const toast=$('toastNotification');if(!toast)return;if(toastTimer)clearTimeout(toastTimer);if(toastCloseTimer)clearTimeout(toastCloseTimer);toast.classList.remove('hide');toast.textContent=t;toast.style.background=color==='green'?'#27833b':'#c62828';toast.style.borderColor=color==='green'?'#145522':'#7f1111';toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');toastTimer=setTimeout(()=>{toast.classList.remove('show');toast.classList.add('hide');toastCloseTimer=setTimeout(()=>{toast.classList.remove('hide');toast.textContent=''},280)},3000)}function msg(t){greenMsg(t)}function redMsg(t){showToast(t,'red')}function greenMsg(t){showToast(t,'green')}
 function persist(){s.balance=Math.max(0,Number(s.balance)||0);localStorage.setItem('taksabot-save-v2',JSON.stringify(s));render();pushCloud()}
 function render(){const yard=document.querySelector('.yard');if(yard)yard.dataset.background=s.selectedBackground||'default';const bgShop=$('backgroundShop');if(bgShop)bgShop.innerHTML=backgroundItems.map(x=>'<div class="job"><b>'+x.emoji+' '+x.name+' — '+x.price+' 🌭</b><button '+(s.ownedBackgrounds.includes(x.id)?'disabled':'')+' onclick="buyBackground(\''+x.id+'\')">'+(s.ownedBackgrounds.includes(x.id)?'Куплено ✓':'Купить')+'</button></div>').join('');if($('wardrobeItems')&&!$('wardrobeItems').classList.contains('hidden'))renderWardrobe();
